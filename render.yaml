@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: visual-arc
+    runtime: node
+    plan: free
+    buildCommand: ""
+    startCommand: "node server.js"
+    envVars:
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: ADMIN_KEY
+        sync: false
+      - key: USDT_ADDRESS
+        sync: false

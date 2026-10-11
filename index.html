@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Visual Arc — Temporary US Numbers for Verification Codes</title>
+<style>
+  :root{
+    --bg:#e9ebf1; --card:#ffffff; --ink:#20242e; --muted:#6b7280;
+    --accent:#ff7a18; --accent2:#ffb35c; --ok:#10b981; --warn:#f59e0b; --bad:#ef4444;
+    --line:#e3e5ec; --chip:#fff1e3;
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:var(--ink); line-height:1.55}
+  button{font-family:inherit; cursor:pointer; border:none}
+  a{color:var(--accent); text-decoration:none}
+  .hidden{display:none !important}
+
+  /* ---------- LANDING ---------- */
+  .hero{background:linear-gradient(160deg,#eef0f5 0%,#e2e5ec 42%,#f6e8d9 100%); color:var(--ink); padding:28px 24px 72px; position:relative; overflow:hidden}
+  .nav{max-width:1080px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; position:relative; z-index:2}
+  .logo{display:flex; align-items:center; gap:10px; font-weight:800; font-size:20px; color:var(--ink)}
+  .sidebar .logo{color:#fff}
+  .logo-badge{width:34px; height:34px; border-radius:10px; background:linear-gradient(135deg,#ff8a1e,#f2650a); display:flex; align-items:center; justify-content:center; font-size:18px; box-shadow:0 6px 16px rgba(242,101,10,.35)}
+  .nav-links{display:flex; gap:22px; align-items:center}
+  .nav-links a{color:#4b5162; font-size:14px; font-weight:600}
+  .btn{border-radius:12px; padding:12px 22px; font-size:15px; font-weight:700; transition:.15s transform, .15s box-shadow}
+  .btn:hover{transform:translateY(-1px)}
+  .btn-white{background:#fff; color:var(--accent); box-shadow:0 10px 24px rgba(32,36,46,.12)}
+  .btn-ghost{background:rgba(255,255,255,.55); color:var(--ink); border:1px solid #d6d9e2}
+  .btn-primary{background:linear-gradient(135deg,#ff8a1e,#f2650a); color:#fff; box-shadow:0 8px 20px rgba(242,101,10,.35)}
+  .btn-primary:hover{background:linear-gradient(135deg,#f2650a,#e05a08)}
+  .btn-soft{background:var(--chip); color:var(--accent)}
+  .btn-danger-soft{background:#fee2e2; color:#b91c1c}
+  .hero-inner{max-width:1080px; margin:56px auto 0; display:grid; grid-template-columns:1.1fr .9fr; gap:48px; align-items:center; position:relative; z-index:1}
+  .hero h1{font-size:46px; line-height:1.12; letter-spacing:-1px; margin-bottom:18px}
+  .hero p.sub{font-size:18px; color:#565c6b; margin-bottom:28px; max-width:520px}
+  .hero-cta{display:flex; gap:14px; flex-wrap:wrap}
+  .hero-stats{display:flex; gap:28px; margin-top:34px; flex-wrap:wrap}
+  .hero-stats div strong{display:block; font-size:24px}
+  .hero-stats div span{font-size:13px; color:#6b7280}
+
+  /* phone mock */
+  .phone{background:#fff; border-radius:22px; padding:18px; color:var(--ink); box-shadow:0 30px 60px rgba(0,0,0,.28); transform:rotate(1.5deg)}
+  .phone-top{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px}
+  .phone-num{font-size:19px; font-weight:800; letter-spacing:.3px}
+  .pill{display:inline-flex; align-items:center; gap:6px; background:#ecfdf5; color:#047857; font-size:12px; font-weight:700; padding:5px 10px; border-radius:999px}
+  .pill.warn{background:#fffbeb; color:#b45309}
+  .sms-bubble{background:#f1f5f9; border-radius:14px; padding:14px; margin-top:10px; font-size:14px}
+  .sms-bubble .from{color:var(--muted); font-size:12px; margin-bottom:4px}
+  .code-big{font-size:26px; font-weight:800; letter-spacing:4px; color:var(--accent)}
+  .timer-row{display:flex; justify-content:space-between; align-items:center; margin-top:12px; font-size:13px; color:var(--muted)}
+
+  .ticker{background:#20242e; color:#cbd5e1; font-size:13px; padding:10px 24px; text-align:center}
+  .ticker b{color:#fff}
+
+  .section{max-width:1080px; margin:0 auto; padding:72px 24px}
+  .section h2{font-size:32px; letter-spacing:-.5px; margin-bottom:10px}
+  .section .lead{color:var(--muted); font-size:17px; margin-bottom:36px}
+  .grid3{display:grid; grid-template-columns:repeat(3,1fr); gap:20px}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:18px; padding:26px}
+  .step-num{width:38px; height:38px; border-radius:12px; background:var(--chip); color:var(--accent); font-weight:800; display:flex; align-items:center; justify-content:center; margin-bottom:14px}
+  .card h3{font-size:18px; margin-bottom:8px}
+  .card p{color:var(--muted); font-size:14.5px}
+
+  .price-row{display:grid; grid-template-columns:repeat(3,1fr); gap:20px}
+  .price-card{position:relative}
+  .price-card.featured{border:2px solid var(--accent); box-shadow:0 16px 40px rgba(242,101,10,.14)}
+  .price-tag{font-size:34px; font-weight:800; margin:8px 0}
+  .price-tag small{font-size:14px; color:var(--muted); font-weight:600}
+  .price-card ul{list-style:none; margin:16px 0 22px}
+  .price-card li{padding:7px 0; font-size:14.5px; color:#334155; display:flex; gap:8px}
+  .price-card li:before{content:"✓"; color:var(--ok); font-weight:800}
+  .badge-featured{position:absolute; top:-12px; right:18px; background:var(--accent); color:#fff; font-size:11px; font-weight:800; padding:5px 12px; border-radius:999px}
+
+  .footer{background:#20242e; color:#94a3b8; padding:36px 24px; text-align:center; font-size:13px}
+  .footer b{color:#fff}
+
+  /* ---------- APP ---------- */
+  .app-shell{display:flex; min-height:100vh}
+  .sidebar{width:230px; background:#20242e; color:#cbd5e1; padding:22px 14px; flex-shrink:0}
+  .sidebar .logo{font-size:17px; margin-bottom:26px; padding:0 8px}
+  .nav-item{display:flex; align-items:center; gap:11px; padding:11px 12px; border-radius:11px; font-size:14px; font-weight:600; color:#94a3b8; cursor:pointer; margin-bottom:4px}
+  .nav-item:hover{background:rgba(255,255,255,.06); color:#fff}
+  .nav-item.active{background:var(--accent); color:#fff}
+  .nav-ico{width:20px; text-align:center}
+  .side-foot{margin-top:auto; padding:14px 10px; font-size:11.5px; color:#64748b}
+  .app-main{flex:1; display:flex; flex-direction:column; min-width:0}
+  .topbar{background:#fff; border-bottom:1px solid var(--line); padding:14px 26px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:5}
+  .topbar h2{font-size:18px}
+  .top-right{display:flex; align-items:center; gap:12px}
+  .credit-chip{background:#fff7ed; color:#c2410c; border:1px solid #fed7aa; font-weight:800; font-size:13.5px; padding:8px 14px; border-radius:999px}
+  .demo-chip{background:#fff7ed; color:#c2410c; border:1px solid #fed7aa; font-size:11.5px; font-weight:800; padding:6px 11px; border-radius:999px; letter-spacing:.4px}
+  .avatar{width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,#ff8a1e,#f2650a); color:#fff; font-weight:800; font-size:13px; display:flex; align-items:center; justify-content:center}
+  .content{padding:26px; max-width:1080px; width:100%}
+
+  .stat-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:22px}
+  .stat{background:#fff; border:1px solid var(--line); border-radius:16px; padding:18px}
+  .stat .lbl{font-size:12px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.6px}
+  .stat .val{font-size:26px; font-weight:800; margin-top:4px}
+  .stat .delta{font-size:12px; font-weight:700; margin-top:2px}
+  .up{color:var(--ok)} .down{color:var(--bad)}
+
+  .panel{background:#fff; border:1px solid var(--line); border-radius:16px; padding:22px; margin-bottom:20px}
+  .panel h3{font-size:16.5px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center}
+  .hint{font-size:13px; color:var(--muted)}
+
+  .svc-list{display:flex; flex-direction:column; gap:10px}
+  .svc{display:flex; align-items:center; justify-content:space-between; gap:14px; border:1px solid var(--line); border-radius:14px; padding:14px 16px; background:#fff; transition:.15s border-color}
+  .svc:hover{border-color:#fdba7c}
+  .svc-left{display:flex; align-items:center; gap:13px; min-width:0}
+  .svc-ico{width:42px; height:42px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:19px; background:var(--chip); flex-shrink:0}
+  .svc-name{font-weight:700; font-size:14.5px}
+  .svc-meta{font-size:12px; color:var(--muted)}
+  .svc-right{display:flex; align-items:center; gap:14px; flex-shrink:0}
+  .svc-price{font-weight:800; font-size:15px}
+  .succ{font-size:11.5px; font-weight:700; padding:3px 8px; border-radius:999px; background:#ecfdf5; color:#047857}
+  .succ.med{background:#fffbeb; color:#b45309}
+
+  table{width:100%; border-collapse:collapse; font-size:13.5px}
+  th{text-align:left; color:var(--muted); font-size:11.5px; text-transform:uppercase; letter-spacing:.6px; padding:10px 12px; border-bottom:1px solid var(--line)}
+  td{padding:12px; border-bottom:1px solid #f1f5f9}
+  .tag{font-size:11px; font-weight:800; padding:3px 9px; border-radius:999px}
+  .tag.ok{background:#ecfdf5; color:#047857}
+  .tag.refund{background:#fffbeb; color:#b45309}
+  .tag.live{background:#fff1e3; color:#c2410c}
+
+  .msg{display:flex; gap:12px; padding:14px; border:1px solid var(--line); border-radius:13px; margin-bottom:10px; background:#fff}
+  .msg-ico{width:40px; height:40px; border-radius:11px; background:#fff1e3; display:flex; align-items:center; justify-content:center; font-size:17px; flex-shrink:0}
+  .msg-body{flex:1; min-width:0}
+  .msg-from{font-weight:700; font-size:13.5px}
+  .msg-text{font-size:13.5px; color:#334155; margin-top:2px}
+  .msg-text .code{font-weight:800; letter-spacing:1px; color:var(--accent)}
+  .msg-time{font-size:11.5px; color:var(--muted); flex-shrink:0}
+
+  .packs{display:grid; grid-template-columns:repeat(4,1fr); gap:14px}
+  .pack{border:1px solid var(--line); border-radius:15px; padding:18px; text-align:center; cursor:pointer; transition:.15s}
+  .pack:hover{border-color:var(--accent); transform:translateY(-2px)}
+  .pack.best{border:2px solid var(--accent)}
+  .pack .amt{font-size:26px; font-weight:800}
+  .pack .bonus{font-size:12px; color:var(--ok); font-weight:700}
+
+  /* rental modal */
+  .overlay{position:fixed; inset:0; background:rgba(15,23,42,.55); display:flex; align-items:center; justify-content:center; z-index:50; padding:18px}
+  .modal{background:#fff; border-radius:20px; width:480px; max-width:100%; overflow:hidden; box-shadow:0 30px 80px rgba(0,0,0,.35)}
+  .modal-head{padding:20px 22px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center}
+  .modal-head h3{font-size:16px}
+  .x{background:none; font-size:20px; color:var(--muted)}
+  .modal-body{padding:22px}
+  .big-num{font-size:27px; font-weight:800; letter-spacing:.6px; text-align:center; background:#fffaf4; border:1px dashed #fdba7c; border-radius:14px; padding:16px; margin:6px 0 12px}
+  .copy-row{display:flex; gap:10px; justify-content:center; margin-bottom:16px}
+  .countdown{text-align:center; font-size:15px; color:var(--muted); margin-bottom:16px}
+  .countdown b{color:var(--ink); font-size:22px}
+  .status-box{border-radius:14px; padding:16px; text-align:center; background:#f8fafc; border:1px solid var(--line)}
+  .status-box .spinner{width:26px; height:26px; border:3px solid #e2e8f0; border-top-color:var(--accent); border-radius:50%; margin:2px auto 10px; animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .arrived{background:#ecfdf5; border-color:#a7f3d0}
+  .arrived .code-big{margin:6px 0}
+  .modal-foot{padding:16px 22px; background:#f8fafc; border-top:1px solid var(--line); display:flex; gap:10px; justify-content:space-between; align-items:center}
+  .demo-link{font-size:12px; color:var(--muted); text-decoration:underline; cursor:pointer; background:none}
+
+  /* toast */
+  .toast-wrap{position:fixed; bottom:22px; right:22px; z-index:100; display:flex; flex-direction:column; gap:10px}
+  .toast{background:#0f172a; color:#fff; padding:13px 18px; border-radius:12px; font-size:13.5px; font-weight:600; box-shadow:0 12px 30px rgba(0,0,0,.25); animation:slidein .25s ease}
+  .toast.ok{background:#047857} .toast.warn{background:#b45309}
+  @keyframes slidein{from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:none}}
+
+  .banner-demo{background:#fffbeb; border:1px solid #fde68a; color:#92400e; font-size:13px; padding:10px 16px; border-radius:12px; margin-bottom:18px; display:flex; gap:9px; align-items:center}
+
+  /* ---------- THEMED DECOR ---------- */
+  .hero-deco{position:absolute; inset:0; z-index:0; pointer-events:none}
+  .hero-deco svg{width:100%; height:100%; display:block}
+  .auth-deco{position:absolute; inset:0; z-index:0; pointer-events:none}
+  .auth-deco svg{width:100%; height:100%; display:block}
+
+  /* ---------- AUTH ---------- */
+  .auth-wrap{min-height:100vh; display:grid; grid-template-columns:1fr 1fr}
+  .auth-left{background:linear-gradient(160deg,#eef0f5 0%,#e2e5ec 45%,#f6e8d9 100%); color:var(--ink); padding:48px; display:flex; flex-direction:column; justify-content:center; position:relative; overflow:hidden}
+  .auth-left > .logo, .auth-left h1, .auth-left .sub, .auth-left .auth-bullets{position:relative; z-index:1}
+  .auth-left h1{font-size:34px; line-height:1.15; letter-spacing:-.5px; margin:14px 0}
+  .auth-left .sub{color:#565c6b; font-size:16px; max-width:420px}
+  .auth-bullets{list-style:none; margin-top:18px}
+  .auth-bullets li{padding:8px 0; font-size:15px; color:#3f4552}
+  .auth-right{display:flex; align-items:center; justify-content:center; padding:32px}
+  .auth-card{background:#fff; border:1px solid var(--line); border-radius:20px; padding:34px; width:430px; max-width:100%; box-shadow:0 24px 60px rgba(15,23,42,.10)}
+  .auth-card h2{font-size:24px; letter-spacing:-.4px}
+  .auth-sub{color:var(--muted); font-size:14px; margin:6px 0 20px}
+  .field{margin-bottom:14px}
+  .field label{display:block; font-size:12.5px; font-weight:700; color:#334155; margin-bottom:6px}
+  .field input{width:100%; border:1px solid var(--line); border-radius:11px; padding:12px 14px; font-size:14.5px; font-family:inherit; outline:none; background:#fff}
+  .field input:focus{border-color:var(--accent); box-shadow:0 0 0 3px rgba(242,101,10,.14)}
+  .btn-google{width:100%; background:#fff; border:1px solid var(--line); color:#1f2937; font-weight:700; padding:12px; border-radius:11px; font-size:14.5px; display:flex; align-items:center; justify-content:center; gap:10px}
+  .btn-google:hover{background:#f8fafc}
+  .gicon{width:18px; height:18px; border-radius:50%; background:conic-gradient(#ea4335 0 25%,#fbbc05 0 50%,#34a853 0 75%,#4285f4 0); display:inline-block}
+  .or{display:flex; align-items:center; gap:12px; color:var(--muted); font-size:12px; margin:16px 0}
+  .or:before,.or:after{content:""; flex:1; height:1px; background:var(--line)}
+  .auth-switch{margin-top:18px; font-size:13.5px; color:var(--muted); text-align:center}
+  .auth-error{background:#fef2f2; color:#b91c1c; font-size:13px; padding:10px 12px; border-radius:10px; margin-bottom:12px}
+  .check-row{display:flex; gap:9px; align-items:flex-start; font-size:12.5px; color:#475569; margin:4px 0 14px}
+  .check-row input{margin-top:3px}
+  .check-row label{font-size:12.5px !important; font-weight:400 !important; margin:0 !important; color:#475569}
+  @media (max-width:900px){
+    .hero-inner{grid-template-columns:1fr}
+    .hero h1{font-size:34px}
+    .grid3,.price-row,.stat-grid,.packs{grid-template-columns:1fr}
+    .sidebar{display:none}
+    .auth-wrap{grid-template-columns:1fr}
+    .auth-left{display:none}
+  }
+</style>
+</head>
+<body>
+
+<!-- ================= LANDING ================= -->
+<div id="page-landing">
+  <header class="hero">
+  <div class="hero-deco" aria-hidden="true">
+    <svg viewBox="0 0 1440 760" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="softBlur" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="70"/></filter>
+        <filter id="midBlur" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="22"/></filter>
+        <radialGradient id="warmGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#ff9a3d" stop-opacity=".9"/>
+          <stop offset="55%" stop-color="#ff7a18" stop-opacity=".45"/>
+          <stop offset="100%" stop-color="#ff7a18" stop-opacity="0"/>
+        </radialGradient>
+        <linearGradient id="pearl" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#dfe3ea"/>
+        </linearGradient>
+        <linearGradient id="pearl2" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#f7f8fb"/><stop offset="100%" stop-color="#d4d8e1"/>
+        </linearGradient>
+        <linearGradient id="peach" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#ffd9b0"/><stop offset="100%" stop-color="#ff8a2a"/>
+        </linearGradient>
+      </defs>
+      <ellipse cx="700" cy="430" rx="380" ry="240" fill="url(#warmGlow)" filter="url(#softBlur)"/>
+      <ellipse cx="1140" cy="250" rx="220" ry="150" fill="url(#warmGlow)" filter="url(#softBlur)" opacity=".5"/>
+      <path d="M520,470 C560,380 660,340 740,370 C830,404 850,470 820,530 C780,608 640,640 560,590 C500,552 490,522 520,470 Z" fill="url(#peach)" opacity=".85" filter="url(#midBlur)"/>
+      <path d="M-20,560 C180,470 320,620 520,560 C720,500 860,620 1080,560 C1240,515 1360,560 1460,520 L1460,780 L-20,780 Z" fill="url(#pearl)" opacity=".92"/>
+      <path d="M-20,645 C220,565 380,705 620,635 C860,565 1020,695 1240,625 C1330,597 1400,615 1460,595 L1460,780 L-20,780 Z" fill="url(#pearl2)"/>
+      <g stroke="#ffffff" stroke-width="3" opacity=".6" fill="none">
+        <path d="M80,180 C220,120 300,220 260,320 C230,398 120,420 60,380"/>
+        <path d="M110,200 C240,150 310,240 275,330 C250,395 155,415 105,385"/>
+        <path d="M140,222 C255,185 320,258 290,335 C270,390 190,410 150,388"/>
+        <path d="M170,246 C270,218 330,276 305,342 C288,386 225,402 195,390"/>
+      </g>
+      <path d="M600,430 C650,388 732,384 782,420" stroke="#fff3e2" stroke-width="12" fill="none" opacity=".85" filter="url(#midBlur)"/>
+    </svg>
+  </div>
+  
+    <nav class="nav">
+      <div class="logo"><div class="logo-badge">📱</div> Visual Arc</div>
+      <div class="nav-links">
+        <a href="#how">How it works</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#" onclick="showAuth('login');return false;">Log in</a>
+        <button class="btn btn-white" onclick="openApp()">Open live demo</button>
+      </div>
+    </nav>
+    <div class="hero-inner">
+      <div>
+        <h1>A US number in seconds.<br>Any code. Total privacy.</h1>
+        <p class="sub">Rent a temporary US phone number for minutes at a time. Receive verification codes and messages instantly in your browser — pay only for what you use, with automatic refunds.</p>
+        <div class="hero-cta">
+          <button class="btn btn-white" onclick="openApp()">▶ Try the live demo</button>
+          <a class="btn btn-ghost" href="#how">See how it works</a>
+        </div>
+        <div class="hero-stats">
+          <div><strong>4,800+</strong><span>numbers in pool</span></div>
+          <div><strong>92%</strong><span>avg. success rate</span></div>
+          <div><strong>&lt;10s</strong><span>code delivery</span></div>
+          <div><strong>Auto</strong><span>refunds on failure</span></div>
+        </div>
+      </div>
+      <div class="phone">
+        <div class="phone-top">
+          <div>
+            <div class="hint">Your temporary number</div>
+            <div class="phone-num">+1 (415) 555-0132</div>
+          </div>
+          <div class="pill">● Receiving</div>
+        </div>
+        <div class="sms-bubble">
+          <div class="from">From: WhatsApp · just now</div>
+          <div>Your WhatsApp code is</div>
+          <div class="code-big">884-219</div>
+          <div class="hint">Don't share this code with anyone.</div>
+        </div>
+        <div class="timer-row"><span>Rental expires in</span><b>14:37</b></div>
+      </div>
+    </div>
+  </header>
+
+  <div class="ticker" id="ticker">🌍 <b>Someone in Berlin</b> just received a Telegram code · 12s ago</div>
+
+  <section class="section" id="how">
+    <h2>How it works</h2>
+    <p class="lead">Three steps. No SIM card, no contracts, no personal phone number needed.</p>
+    <div class="grid3">
+      <div class="card">
+        <div class="step-num">1</div>
+        <h3>Buy credits</h3>
+        <p>Top up your balance from KSh 650. Pay with crypto or card. Credits never expire and are only spent when you rent.</p>
+      </div>
+      <div class="card">
+        <div class="step-num">2</div>
+        <h3>Rent a number</h3>
+        <p>Pick the service you need (WhatsApp, Telegram, or any site). We instantly assign you a private US number for 15 minutes.</p>
+      </div>
+      <div class="card">
+        <div class="step-num">3</div>
+        <h3>Get your code</h3>
+        <p>The message appears live in your dashboard within seconds. No code? Your credits are refunded automatically.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="pricing" style="padding-top:0">
+    <h2>Simple, honest pricing</h2>
+    <p class="lead">Pay per verification — from KSh 20. Prepaid credits with volume bonuses.</p>
+    <div class="price-row">
+      <div class="card price-card">
+        <h3>Starter</h3>
+        <div class="price-tag">KSh 650 <small>one-time</small></div>
+        <ul>
+          <li>≈ 6–30 verifications</li>
+          <li>All standard services</li>
+          <li>Automatic refunds</li>
+          <li>Email support</li>
+        </ul>
+        <button class="btn btn-soft" style="width:100%" onclick="openApp()">Get started</button>
+      </div>
+      <div class="card price-card featured">
+        <div class="badge-featured">MOST POPULAR</div>
+        <h3>Standard</h3>
+        <div class="price-tag">KSh 2,500 <small>one-time · +5% bonus</small></div>
+        <ul>
+          <li>≈ 25–130 verifications</li>
+          <li>Priority number assignment</li>
+          <li>Success-rate dashboard</li>
+          <li>Priority support</li>
+        </ul>
+        <button class="btn btn-primary" style="width:100%" onclick="openApp()">Get started</button>
+      </div>
+      <div class="card price-card">
+        <h3>Pro</h3>
+        <div class="price-tag">KSh 6,500 <small>one-time · +10% bonus</small></div>
+        <ul>
+          <li>Bulk API access</li>
+          <li>Reserved number slots</li>
+          <li>Dedicated support</li>
+          <li>Volume discounts</li>
+        </ul>
+        <button class="btn btn-soft" style="width:100%" onclick="openApp()">Get started</button>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <p><b>Visual Arc</b> — temporary US numbers for privacy, testing, and everyday signups.</p>
+    <p style="margin-top:6px">Numbers are for legitimate use only. Banks &amp; government services are blocked. 18+ · Terms · Privacy · Abuse policy</p>
+  </footer>
+</div>
+
+<!-- ================= AUTH ================= -->
+<div id="page-auth" class="hidden">
+  <div class="auth-wrap">
+    <div class="auth-left">
+      <div class="auth-deco" aria-hidden="true">
+        <svg viewBox="0 0 800 1000" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="aSoft" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="55"/></filter>
+            <filter id="aMid" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="18"/></filter>
+            <radialGradient id="aGlow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#ff9a3d" stop-opacity=".9"/>
+              <stop offset="55%" stop-color="#ff7a18" stop-opacity=".4"/>
+              <stop offset="100%" stop-color="#ff7a18" stop-opacity="0"/>
+            </radialGradient>
+            <linearGradient id="aPearl" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#dde1e9"/>
+            </linearGradient>
+            <linearGradient id="aPeach" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#ffd9b0"/><stop offset="100%" stop-color="#ff8a2a"/>
+            </linearGradient>
+          </defs>
+          <ellipse cx="430" cy="560" rx="300" ry="230" fill="url(#aGlow)" filter="url(#aSoft)"/>
+          <path d="M300,560 C330,470 430,430 520,470 C610,510 620,590 580,650 C530,726 390,740 320,690 C270,654 280,600 300,560 Z" fill="url(#aPeach)" opacity=".8" filter="url(#aMid)"/>
+          <path d="M-20,820 C160,740 320,880 520,810 C660,762 740,800 820,770 L820,1020 L-20,1020 Z" fill="url(#aPearl)" opacity=".9"/>
+          <g stroke="#ffffff" stroke-width="3" opacity=".6" fill="none">
+            <path d="M90,190 C210,130 285,225 250,315 C222,388 125,410 70,372"/>
+            <path d="M118,210 C232,160 300,242 268,325 C244,388 155,406 108,380"/>
+            <path d="M146,232 C248,192 312,260 284,332 C264,384 192,402 152,382"/>
+          </g>
+          <path d="M340,520 C390,480 470,478 518,512" stroke="#fff3e2" stroke-width="11" fill="none" opacity=".85" filter="url(#aMid)"/>
+        </svg>
+      </div>
+      
+      <div class="logo"><div class="logo-badge">📱</div> Visual Arc</div>
+      <h1>One account.<br>Your US numbers anytime.</h1>
+      <p class="sub">Create a free account to rent temporary US numbers, receive verification codes, and manage your credits — all in one dashboard.</p>
+      <ul class="auth-bullets">
+        <li>✅ Instant number rental from <b>KSh 20</b></li>
+        <li>✅ Codes delivered live to your dashboard</li>
+        <li>✅ Automatic refunds when no code arrives</li>
+      </ul>
+    </div>
+    <div class="auth-right">
+      <div class="auth-card">
+        <h2 id="auth-title">Create your account</h2>
+        <p class="auth-sub" id="auth-sub">Start receiving codes in under a minute</p>
+        <div class="auth-error hidden" id="auth-error"></div>
+        <button class="btn-google" onclick="googleAuth()"><span class="gicon"></span> Continue with Google (Gmail)</button>
+        <div class="or">or with email &amp; password</div>
+        <div class="field">
+          <label>Gmail or email</label>
+          <input id="auth-email" type="email" placeholder="you@gmail.com" autocomplete="email" onkeydown="if(event.key==='Enter')submitAuth()">
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <input id="auth-pass" type="password" placeholder="At least 6 characters" autocomplete="new-password" onkeydown="if(event.key==='Enter')submitAuth()">
+        </div>
+        <div class="field hidden" id="auth-confirm-row">
+          <label>Confirm password</label>
+          <input id="auth-confirm" type="password" placeholder="Repeat your password" onkeydown="if(event.key==='Enter')submitAuth()">
+        </div>
+        <div class="check-row hidden" id="auth-terms-row">
+          <input type="checkbox" id="auth-terms">
+          <label for="auth-terms">I agree to the <a href="#" onclick="return false">Terms of Service</a> &amp; <a href="#" onclick="return false">Privacy Policy</a>, and I confirm I am 18 or older.</label>
+        </div>
+        <button class="btn btn-primary" style="width:100%" id="auth-submit" onclick="submitAuth()">Create account</button>
+        <p class="auth-switch" id="auth-switch">Already have an account? <a href="#" onclick="setAuthMode('login');return false;">Log in</a></p>
+        <p class="hint" style="text-align:center; margin-top:12px">Demo mode — any email &amp; password works. Nothing is sent anywhere.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= APP ================= -->
+<div id="page-app" class="app-shell hidden">
+  <aside class="sidebar" style="display:flex; flex-direction:column">
+    <div class="logo"><div class="logo-badge">📱</div> Visual Arc</div>
+    <div class="nav-item active" data-view="dashboard" onclick="showView('dashboard',this)"><span class="nav-ico">🏠</span> Dashboard</div>
+    <div class="nav-item" data-view="rent" onclick="showView('rent',this)"><span class="nav-ico">🔢</span> Rent a number</div>
+    <div class="nav-item" data-view="rentals" onclick="showView('rentals',this)"><span class="nav-ico">⏱️</span> My rentals</div>
+    <div class="nav-item" data-view="messages" onclick="showView('messages',this)"><span class="nav-ico">💬</span> Messages</div>
+    <div class="nav-item" data-view="credits" onclick="showView('credits',this)"><span class="nav-ico">💳</span> Credits</div>
+    <div class="nav-item" onclick="logout()"><span class="nav-ico">🚪</span> Log out</div>
+    <div class="side-foot">DEMO BUILD v0.1<br>Simulated data &amp; numbers</div>
+  </aside>
+
+  <div class="app-main">
+    <div class="topbar">
+      <h2 id="view-title">Dashboard</h2>
+      <div class="top-right">
+        <span class="demo-chip">● DEMO MODE</span>
+        <span class="credit-chip">💰 KSh <span id="credit-balance">1,600</span> credits</span>
+        <div class="avatar">AU</div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="banner-demo">🧪 <b>Demo mode:</b> this is a clickable prototype — numbers, messages and payments are simulated. The real product is built by your developer from the business plan. Prices are in Kenyan Shillings (KSh).</div>
+
+      <!-- DASHBOARD -->
+      <div id="view-dashboard">
+        <div class="stat-grid">
+          <div class="stat"><div class="lbl">Credit balance</div><div class="val">KSh <span id="stat-credits">1,600</span></div><div class="delta up">▲ ready to spend</div></div>
+          <div class="stat"><div class="lbl">Verifications done</div><div class="val" id="stat-verifs">7</div><div class="delta up">▲ 3 this week</div></div>
+          <div class="stat"><div class="lbl">Success rate</div><div class="val">92%</div><div class="delta up">▲ above average</div></div>
+          <div class="stat"><div class="lbl">Credits refunded</div><div class="val">KSh <span id="stat-refunds">110</span></div><div class="delta">auto-refunds</div></div>
+        </div>
+
+        <div class="panel">
+          <h3>Quick rent <button class="btn btn-primary" style="padding:8px 16px; font-size:13px" onclick="showView('rent', document.querySelector('[data-view=rent]'))">See all services</button></h3>
+          <div class="svc-list" id="quick-services"></div>
+        </div>
+
+        <div class="panel">
+          <h3>Recent activity</h3>
+          <table>
+            <thead><tr><th>Service</th><th>Number</th><th>Result</th><th>Cost</th></tr></thead>
+            <tbody id="activity-table">
+              <tr><td>WhatsApp</td><td>+1 (415) 555-0132</td><td><span class="tag ok">Code received</span></td><td>KSh 110</td></tr>
+              <tr><td>Telegram</td><td>+1 (212) 555-0197</td><td><span class="tag ok">Code received</span></td><td>KSh 70</td></tr>
+              <tr><td>Generic SMS</td><td>+1 (646) 555-0141</td><td><span class="tag refund">Refunded</span></td><td>KSh 0</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- RENT -->
+      <div id="view-rent" class="hidden">
+        <div class="panel">
+          <h3>Choose a service <span class="hint">Dynamic pricing · updated live</span></h3>
+          <div class="svc-list" id="all-services"></div>
+        </div>
+        <div class="panel">
+          <h3>ℹ️ Good to know</h3>
+          <p class="hint">• Each rental lasts <b>15 minutes</b> and is for one verification.<br>
+          • If no message arrives in time, your credits are <b>refunded automatically</b>.<br>
+          • Numbers rest between rentals ("cooldown") to keep success rates high.<br>
+          • Banks, government and financial services are <b>not supported</b> — by policy.</p>
+        </div>
+      </div>
+
+      <!-- RENTALS -->
+      <div id="view-rentals" class="hidden">
+        <div class="panel">
+          <h3>Rental history</h3>
+          <table>
+            <thead><tr><th>Date</th><th>Service</th><th>Number</th><th>Status</th><th>Cost</th></tr></thead>
+            <tbody id="rentals-table"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- MESSAGES -->
+      <div id="view-messages" class="hidden">
+        <div class="panel">
+          <h3>Inbox <span class="hint">Messages auto-delete after 30 days</span></h3>
+          <div id="msg-list"></div>
+        </div>
+      </div>
+
+      <!-- CREDITS -->
+      <div id="view-credits" class="hidden">
+        <div class="panel">
+          <h3>Buy credits <span class="hint">Crypto (USDT/BTC) or card</span></h3>
+          <div class="packs">
+            <div class="pack" onclick="buyCredits(650)"><div class="amt">KSh 650</div><div class="hint">Starter</div></div>
+            <div class="pack best" onclick="buyCredits(2500)"><div class="amt">KSh 2,500</div><div class="bonus">+5% bonus</div></div>
+            <div class="pack" onclick="buyCredits(6500)"><div class="amt">KSh 6,500</div><div class="bonus">+10% bonus</div></div>
+            <div class="pack" onclick="buyCredits(13000)"><div class="amt">KSh 13,000</div><div class="bonus">+15% bonus</div></div>
+          </div>
+          <p class="hint" style="margin-top:14px">Payments in the real product run on crypto + a high-risk card processor. Credits are prepaid and non-refundable except automatic refunds for failed verifications.</p>
+        </div>
+        <div class="panel">
+          <h3>Billing history</h3>
+          <table>
+            <thead><tr><th>Date</th><th>Method</th><th>Amount</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>Oct 10, 2026</td><td>USDT (TRC-20)</td><td>+KSh 2,500</td><td><span class="tag ok">Completed</span></td></tr>
+              <tr><td>Oct 3, 2026</td><td>Visa ···4242</td><td>+KSh 650</td><td><span class="tag ok">Completed</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- RENTAL MODAL -->
+<div id="rental-overlay" class="overlay hidden">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modal-service">Active rental — WhatsApp</h3>
+      <button class="x" onclick="closeRental()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="hint" style="text-align:center">Your private number (copy it into the app you're signing up for)</div>
+      <div class="big-num" id="modal-number">+1 (415) 555-0132</div>
+      <div class="copy-row">
+        <button class="btn btn-soft" style="padding:9px 18px; font-size:13px" onclick="copyNumber()">📋 Copy number</button>
+      </div>
+      <div class="countdown">Rental expires in <b id="modal-timer">15:00</b></div>
+      <div class="status-box" id="status-box">
+        <div class="spinner"></div>
+        <b id="status-text">Waiting for SMS…</b>
+        <div class="hint" style="margin-top:4px" id="status-sub">The message will appear here automatically.</div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="demo-link" onclick="simulateTimeout()">demo: simulate timeout &amp; auto-refund</button>
+      <button class="btn btn-primary" style="padding:9px 16px; font-size:13px" onclick="closeRental()">Done</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toasts"></div>
+
+<script>
+  /* ---------------- state ---------------- */
+  const state = {
+    credits: 1600,
+    verifs: 7,
+    refunds: 110,
+    rentals: [
+      {date:"Oct 10, 2026", service:"WhatsApp", number:"+1 (415) 555-0132", status:"ok", cost:110},
+      {date:"Oct 10, 2026", service:"Telegram", number:"+1 (212) 555-0197", status:"ok", cost:70},
+      {date:"Oct 9, 2026",  service:"Generic SMS", number:"+1 (646) 555-0141", status:"refund", cost:0}
+    ],
+    messages: [
+      {from:"WhatsApp", text:"Your WhatsApp code is 884-219. Don't share this code.", code:"884-219", time:"2h ago"},
+      {from:"Telegram", text:"Telegram code: 42853. Do not give this code to anyone.", code:"42853", time:"1d ago"}
+    ],
+    activeRental: null
+  };
+
+  const services = [
+    {name:"Generic SMS", desc:"Any website or app", price:20, ico:"✉️", succ:"95%", med:false},
+    {name:"WhatsApp", desc:"Messaging verification", price:110, ico:"🟢", succ:"89%", med:false},
+    {name:"Telegram", desc:"Account verification", price:70, ico:"🔵", succ:"91%", med:false},
+    {name:"Discord", desc:"Account verification", price:45, ico:"🎮", succ:"93%", med:false},
+    {name:"Uber", desc:"Rider signup", price:100, ico:"🚗", succ:"86%", med:true},
+    {name:"Instagram", desc:"High demand — scarce", price:155, ico:"📸", succ:"78%", med:true},
+    {name:"Google / Gmail", desc:"Premium verification", price:195, ico:"📮", succ:"72%", med:true},
+    {name:"Dating apps", desc:"Tinder, Bumble, etc.", price:115, ico:"💬", succ:"84%", med:true}
+  ];
+
+  const poolNumbers = [
+    "+1 (415) 555-0132", "+1 (212) 555-0197", "+1 (646) 555-0141",
+    "+1 (312) 555-0188", "+1 (917) 555-0163", "+1 (213) 555-0175"
+  ];
+
+  /* ---------------- REAL NUMBERS MODE ---------------- */
+  let REAL = false, pollTimer = null;
+  let TOKEN = localStorage.getItem('va_token') || '';
+  function authH(){ return TOKEN ? {'Authorization':'Bearer '+TOKEN} : {}; }
+  (async function initReal(){
+    try{
+      const s = await fetch('/api/status').then(r=>r.json());
+      if(s.real){
+        REAL = true;
+        const b = document.querySelector('.banner-demo');
+        if(b) b.innerHTML = '🔴 <b>LIVE MODE:</b> real numbers · real SMS · real credits. <b>Log in</b> or create an account to start renting.';
+        toast('Live engine connected ✓ (' + s.provider + ')', 'ok');
+      }
+    }catch(e){ /* static hosting = demo mode */ }
+    if(TOKEN){
+      try{
+        const me = await fetch('/api/me', {headers: authH()}).then(r=>r.json());
+        if(me.ok){
+          state.credits = me.credits; refreshBalances();
+          const initial = me.email.replace(/[^a-zA-Z]/g,'').slice(0,2).toUpperCase() || 'AU';
+          document.querySelectorAll('.avatar').forEach(a=>a.textContent = initial);
+        } else { TOKEN=''; localStorage.removeItem('va_token'); }
+      }catch(e){}
+    }
+  })();
+
+  function esc(t){ return String(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  async function realRent(name, price){
+    if(REAL && !TOKEN){ toast('Log in first to rent a number','warn'); showAuth('login'); return; }
+    let d;
+    try{
+      const res = await fetch('/api/rent', {method:'POST', headers:Object.assign({'Content-Type':'application/json'}, authH()), body: JSON.stringify({service:name})});
+      d = await res.json();
+    }catch(e){ toast('Network error — cannot reach the number server','warn'); return; }
+    if(!d.ok){
+      toast(d.error || 'Could not get a number right now','warn');
+      if(String(d.error||'').indexOf('credits') > -1){ showView('credits', document.querySelector('[data-view=credits]')); }
+      return;
+    }
+    if(typeof d.credits === 'number'){ state.credits = d.credits; } else { state.credits = Math.max(0, state.credits - price); }
+    refreshBalances();
+    state.activeRental = {name, price, number:d.number, status:'waiting', realId:d.rentalId};
+
+    $('#modal-service').textContent = 'Active rental — ' + name;
+    $('#modal-number').textContent = d.number;
+    $('#status-box').className = 'status-box';
+    $('#status-box').innerHTML = '<div class="spinner"></div><b>Waiting for REAL SMS…</b>' +
+      '<div class="hint" style="margin-top:4px">Text or verify with ' + esc(d.number) + ' — the message appears here live.</div>';
+    $('#rental-overlay').classList.remove('hidden');
+
+    let left = 15*60;
+    clearInterval(timerInterval);
+    timerInterval = setInterval(()=>{
+      left--;
+      const mm = String(Math.floor(left/60)).padStart(2,'0'), ss = String(left%60).padStart(2,'0');
+      $('#modal-timer').textContent = mm + ':' + ss;
+      if(left<=0){ clearInterval(timerInterval); simulateTimeout(); }
+    },1000);
+    $('#modal-timer').textContent = '15:00';
+
+    clearInterval(pollTimer);
+    pollTimer = setInterval(async ()=>{
+      if(!state.activeRental || !state.activeRental.realId) return clearInterval(pollTimer);
+      try{
+        const r = await fetch('/api/rentals/' + state.activeRental.realId).then(x=>x.json());
+        if(r.messages && r.messages.length && state.activeRental.status === 'waiting'){
+          state.activeRental.status = 'done';
+          clearInterval(pollTimer);
+          const msg = r.messages[0];
+          $('#status-box').className = 'status-box arrived';
+          $('#status-box').innerHTML = '<div style="font-size:22px">✅</div><b>Real message received!</b>' +
+            (msg.code ? '<div class="code-big">' + esc(msg.code) + '</div>' : '') +
+            '<div class="hint" style="margin-top:6px">' + esc(msg.text).slice(0,160) + '</div>' +
+            '<div class="hint">From ' + esc(msg.from) + ' · just now</div>';
+          state.verifs++;
+          state.messages.unshift({from: msg.from || 'SMS', text: msg.text || '', code: msg.code || '', time: 'just now'});
+          refreshBalances(); renderMessages();
+          toast('Real SMS received 🎉','ok');
+        }
+      }catch(e){}
+    }, 3000);
+
+    toast('Real number reserved: ' + d.number, 'ok');
+  }
+
+  /* ---------------- helpers ---------------- */
+  const $ = s => document.querySelector(s);
+  function toast(msg, type=""){
+    const t = document.createElement("div");
+    t.className = "toast " + type;
+    t.textContent = msg;
+    $("#toasts").appendChild(t);
+    setTimeout(()=>t.remove(), 3200);
+  }
+  function money(n){ return Math.round(n).toLocaleString("en-KE"); }
+
+  function refreshBalances(){
+    $("#credit-balance").textContent = money(state.credits);
+    $("#stat-credits").textContent = money(state.credits);
+    $("#stat-verifs").textContent = state.verifs;
+    $("#stat-refunds").textContent = money(state.refunds);
+  }
+
+  /* ---------------- navigation ---------------- */
+  function openApp(){ showAuth("signup"); }
+
+  function showAuth(mode){
+    $("#page-landing").classList.add("hidden");
+    $("#page-app").classList.add("hidden");
+    $("#page-auth").classList.remove("hidden");
+    setAuthMode(mode);
+    window.scrollTo({top:0});
+  }
+
+  function setAuthMode(mode){
+    const signup = mode === "signup";
+    $("#auth-title").textContent = signup ? "Create your account" : "Welcome back";
+    $("#auth-sub").textContent = signup ? "Start receiving codes in under a minute" : "Log in to your Visual Arc account";
+    $("#auth-submit").textContent = signup ? "Create account" : "Log in";
+    $("#auth-confirm-row").classList.toggle("hidden", !signup);
+    $("#auth-terms-row").classList.toggle("hidden", !signup);
+    $("#auth-switch").innerHTML = signup
+      ? "Already have an account? <a href='#' onclick=\"setAuthMode('login');return false;\">Log in</a>"
+      : "New to Visual Arc? <a href='#' onclick=\"setAuthMode('signup');return false;\">Create an account</a>";
+    $("#auth-error").classList.add("hidden");
+  }
+
+  async function submitAuth(){
+    const email = $("#auth-email").value.trim();
+    const pass = $("#auth-pass").value;
+    const err = $("#auth-error");
+    const signup = !$("#auth-confirm-row").classList.contains("hidden");
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){
+      err.textContent = "Please enter a valid email (e.g. yourname@gmail.com)";
+      err.classList.remove("hidden"); return;
+    }
+    if(pass.length < 6){
+      err.textContent = "Password must be at least 6 characters";
+      err.classList.remove("hidden"); return;
+    }
+    if(signup && pass !== $("#auth-confirm").value){
+      err.textContent = "Passwords do not match";
+      err.classList.remove("hidden"); return;
+    }
+    if(signup && !$("#auth-terms").checked){
+      err.textContent = "Please accept the Terms and confirm you are 18 or older";
+      err.classList.remove("hidden"); return;
+    }
+    err.classList.add("hidden");
+    if(REAL){
+      try{
+        const r = await fetch(signup ? '/api/signup' : '/api/login', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email, password: pass})}).then(x=>x.json());
+        if(!r.ok){ err.textContent = r.error || 'Something went wrong'; err.classList.remove('hidden'); return; }
+        TOKEN = r.token; localStorage.setItem('va_token', TOKEN);
+        state.credits = r.credits;
+        enterApp(false, r.email);
+        toast(signup ? 'Account created — welcome to Visual Arc 🎉' : 'Welcome back 👋', 'ok');
+        return;
+      }catch(e){ err.textContent = 'Network error — try again'; err.classList.remove('hidden'); return; }
+    }
+    enterApp(false, email);
+  }
+
+  function googleAuth(){
+    if(REAL){
+      toast('Google sign-in lands in the next update — for now use your Gmail + password', 'warn');
+      const e = document.querySelector('#auth-email'); if(e){ e.focus(); }
+      return;
+    }
+    enterApp(true, "you@gmail.com");
+  }
+
+  function enterApp(viaGoogle, email){
+    $("#page-auth").classList.add("hidden");
+    $("#page-landing").classList.add("hidden");
+    $("#page-app").classList.remove("hidden");
+    const initial = (email || "AU").replace(/[^a-zA-Z]/g,"").slice(0,2).toUpperCase() || "AU";
+    document.querySelectorAll(".avatar").forEach(a=>a.textContent = initial);
+    renderServices(); renderRentals(); renderMessages(); refreshBalances();
+    toast(viaGoogle ? "Signed in with Google ✓" : "Welcome to Visual Arc 👋", "ok");
+  }
+
+  function logout(){
+    TOKEN=''; localStorage.removeItem('va_token');
+    $("#page-app").classList.add("hidden");
+    $("#page-auth").classList.remove("hidden");
+    $("#auth-pass").value = ""; $("#auth-confirm").value = "";
+    setAuthMode("login");
+    toast("Logged out — see you soon!");
+  }
+  function showView(name, el){
+    ["dashboard","rent","rentals","messages","credits"].forEach(v=>{
+      $("#view-"+v).classList.toggle("hidden", v!==name);
+    });
+    document.querySelectorAll(".nav-item").forEach(n=>n.classList.remove("active"));
+    if(el) el.classList.add("active");
+    const titles = {dashboard:"Dashboard", rent:"Rent a number", rentals:"My rentals", messages:"Messages", credits:"Credits"};
+    $("#view-title").textContent = titles[name];
+    window.scrollTo({top:0});
+  }
+
+  /* ---------------- services ---------------- */
+  function svcCard(s, compact){
+    return `
+      <div class="svc">
+        <div class="svc-left">
+          <div class="svc-ico">${s.ico}</div>
+          <div>
+            <div class="svc-name">${s.name}</div>
+            <div class="svc-meta">${s.desc} · <span class="succ ${s.med?'med':''}">${s.succ} success</span></div>
+          </div>
+        </div>
+        <div class="svc-right">
+          <div class="svc-price">KSh ${money(s.price)}</div>
+          <button class="btn btn-primary" style="padding:9px 16px; font-size:13px" onclick="rentService('${s.name}', ${s.price})">Rent</button>
+        </div>
+      </div>`;
+  }
+  function renderServices(){
+    $("#quick-services").innerHTML = services.slice(0,3).map(s=>svcCard(s)).join("");
+    $("#all-services").innerHTML = services.map(s=>svcCard(s)).join("");
+  }
+
+  /* ---------------- rental flow ---------------- */
+  let timerInterval=null, smsTimeout=null;
+
+  function rentService(name, price){
+    if(REAL){ return realRent(name, price); }
+    if(state.credits < price){ toast("Not enough credits — top up first", "warn"); showView("credits", document.querySelector('[data-view=credits]')); return; }
+    state.credits -= price;
+    refreshBalances();
+
+    const number = poolNumbers[Math.floor(Math.random()*poolNumbers.length)];
+    state.activeRental = {name, price, number, status:"waiting"};
+
+    $("#modal-service").textContent = "Active rental — " + name;
+    $("#modal-number").textContent = number;
+    $("#status-box").className = "status-box";
+    $("#status-box").innerHTML = `<div class="spinner"></div><b id="status-text">Waiting for SMS…</b>
+      <div class="hint" style="margin-top:4px" id="status-sub">The message will appear here automatically.</div>`;
+    $("#rental-overlay").classList.remove("hidden");
+
+    // countdown 15 min
+    let left = 15*60;
+    clearInterval(timerInterval);
+    timerInterval = setInterval(()=>{
+      left--;
+      const m = String(Math.floor(left/60)).padStart(2,"0");
+      const s = String(left%60).padStart(2,"0");
+      $("#modal-timer").textContent = `${m}:${s}`;
+      if(left<=0){ clearInterval(timerInterval); simulateTimeout(); }
+    },1000);
+    $("#modal-timer").textContent = "15:00";
+
+    // simulated SMS arrives in 5–9s
+    clearTimeout(smsTimeout);
+    smsTimeout = setTimeout(()=>smsArrives(name), 5000 + Math.random()*4000);
+    toast(`Number assigned: ${number}`, "ok");
+  }
+
+  function smsArrives(service){
+    if(!state.activeRental || state.activeRental.status!=="waiting") return;
+    state.activeRental.status = "done";
+    const code = String(Math.floor(100000 + Math.random()*900000));
+    const codeFmt = code.slice(0,3)+"-"+code.slice(3);
+
+    $("#status-box").className = "status-box arrived";
+    $("#status-box").innerHTML = `
+      <div style="font-size:22px">✅</div>
+      <b>Message received!</b>
+      <div class="code-big">${codeFmt}</div>
+      <button class="btn btn-primary" style="padding:9px 16px; font-size:13px" onclick="navigator.clipboard&&navigator.clipboard.writeText('${codeFmt}');toast('Code copied 📋','ok')">Copy code</button>
+      <div class="hint" style="margin-top:8px">From ${service} · just now</div>`;
+
+    state.verifs++;
+    state.messages.unshift({from:service, text:`Your ${service} code is ${codeFmt}. Don't share this code.`, code:codeFmt, time:"just now"});
+    state.rentals.unshift({date:"Today", service, number:$("#modal-number").textContent, status:"ok", cost:state.activeRental.price});
+    refreshBalances(); renderRentals(); renderMessages();
+    toast("Verification code received! 🎉", "ok");
+  }
+
+  function simulateTimeout(){
+    if(!state.activeRental) return;
+    clearTimeout(smsTimeout); clearInterval(timerInterval); clearInterval(pollTimer);
+    if(state.activeRental.realId){ fetch('/api/rentals/' + state.activeRental.realId + '/release', {method:'POST'}).catch(()=>{}); }
+    if(state.activeRental.status==="waiting"){
+      state.activeRental.status = "refunded";
+      state.credits += state.activeRental.price;
+      state.refunds += state.activeRental.price;
+      state.rentals.unshift({date:"Today", service:state.activeRental.name, number:$("#modal-number").textContent, status:"refund", cost:0});
+      $("#modal-timer").textContent = "00:00";
+      $("#status-box").className = "status-box";
+      $("#status-box").style.background = "#fffbeb";
+      $("#status-box").innerHTML = `
+        <div style="font-size:22px">↩️</div>
+        <b>No message received</b>
+        <div class="hint" style="margin-top:4px">KSh ${money(state.activeRental.price)} refunded to your credits automatically.</div>`;
+      refreshBalances(); renderRentals();
+      toast("No SMS — credits refunded automatically", "warn");
+    }
+  }
+
+  function closeRental(){
+    clearInterval(timerInterval); clearTimeout(smsTimeout); clearInterval(pollTimer);
+    if(state.activeRental && state.activeRental.realId){ fetch('/api/rentals/' + state.activeRental.realId + '/release', {method:'POST'}).catch(()=>{}); }
+    $("#rental-overlay").classList.add("hidden");
+    state.activeRental = null;
+  }
+  function copyNumber(){
+    const n = $("#modal-number").textContent;
+    if(navigator.clipboard) navigator.clipboard.writeText(n);
+    toast("Number copied 📋", "ok");
+  }
+
+  /* ---------------- credits ---------------- */
+  async function buyCredits(amount){
+    if(REAL){
+      if(!TOKEN){ toast('Log in first to top up','warn'); showAuth('login'); return; }
+      let info = {usdtAddress:'', method:'USDT (TRC-20)'};
+      try{ info = await fetch('/api/payment-info').then(r=>r.json()); }catch(e){}
+      const usd = Math.max(1, Math.round(amount/130));
+      const div = document.createElement('div');
+      div.className = 'overlay';
+      div.innerHTML = '<div class="modal"><div class="modal-head"><h3>Top up · KSh ' + amount.toLocaleString() + '</h3><button class="x">✕</button></div>' +
+        '<div class="modal-body">' +
+        '<p style="font-size:14px; margin-bottom:10px">Send <b>' + usd + ' USDT</b> (≈ KSh ' + amount.toLocaleString() + ') via <b>' + info.method + '</b> to:</p>' +
+        '<div class="big-num" style="font-size:13px; word-break:break-all">' + (info.usdtAddress || 'Payment address coming soon — contact support') + '</div>' +
+        '<p class="hint" style="margin-top:10px">Your email <b>' + (localStorage.getItem('va_email')||'') + '</b> is your payment reference. Credits are added by the admin after payment lands (usually minutes).</p>' +
+        '</div><div class="modal-foot"><span class="hint">Real payment · real credits</span><button class="btn btn-primary pay-done" style="padding:9px 16px; font-size:13px">I've sent it</button></div></div>';
+      document.body.appendChild(div);
+      div.querySelectorAll('.x, .pay-done').forEach(b=>b.addEventListener('click', ()=>div.remove()));
+      return;
+    }
+    const bonus = amount>=13000?0.15:amount>=6500?0.10:amount>=2500?0.05:0;
+    const total = amount * (1+bonus);
+    state.credits += total;
+    refreshBalances();
+    toast(`+KSh ${money(total)} credits added (simulated payment)`, "ok");
+  }
+
+  /* ---------------- lists ---------------- */
+  function renderRentals(){
+    $("#rentals-table").innerHTML = state.rentals.map(r=>`
+      <tr>
+        <td>${r.date}</td><td>${r.service}</td><td>${r.number}</td>
+        <td>${r.status==="ok"?'<span class="tag ok">Code received</span>':'<span class="tag refund">Auto-refunded</span>'}</td>
+        <td>${r.status==="ok"?"KSh "+money(r.cost):"KSh 0"}</td>
+      </tr>`).join("");
+    $("#activity-table").innerHTML = state.rentals.slice(0,5).map(r=>`
+      <tr><td>${r.service}</td><td>${r.number}</td>
+      <td>${r.status==="ok"?'<span class="tag ok">Code received</span>':'<span class="tag refund">Refunded</span>'}</td>
+      <td>${r.status==="ok"?"KSh "+money(r.cost):"KSh 0"}</td></tr>`).join("");
+  }
+
+  function renderMessages(){
+    $("#msg-list").innerHTML = state.messages.map(m=>`
+      <div class="msg">
+        <div class="msg-ico">💬</div>
+        <div class="msg-body">
+          <div class="msg-from">${m.from}</div>
+          <div class="msg-text">${m.text.replace(m.code, `<span class="code">${m.code}</span>`)}</div>
+        </div>
+        <div class="msg-time">${m.time}</div>
+      </div>`).join("");
+  }
+
+  /* ---------------- ticker ---------------- */
+  const tickerItems = [
+    "🌍 <b>Someone in Berlin</b> just received a Telegram code · 12s ago",
+    "🌎 <b>A user in Toronto</b> verified WhatsApp with a US number · 31s ago",
+    "🌍 <b>Someone in Lagos</b> got a Discord code · 47s ago",
+    "🌏 <b>A tester in Manila</b> received a generic SMS · 1m ago",
+    "🌎 <b>Someone in São Paulo</b> verified Uber · 2m ago"
+  ];
+  let tickerIdx = 0;
+  setInterval(()=>{ tickerIdx=(tickerIdx+1)%tickerItems.length; $("#ticker").innerHTML = tickerItems[tickerIdx]; }, 4000);
+</script>
+</body>
+</html>

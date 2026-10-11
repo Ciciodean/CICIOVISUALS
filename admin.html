@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Visual Arc — Admin</title>
+<style>
+  :root{--bg:#e9ebf1;--card:#fff;--ink:#20242e;--muted:#6b7280;--accent:#ff7a18;--line:#e3e5ec;--ok:#10b981;--bad:#ef4444}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);padding:28px}
+  h1{font-size:22px; margin-bottom:4px}
+  .sub{color:var(--muted); font-size:13.5px; margin-bottom:22px}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:22px; margin-bottom:18px}
+  .card h2{font-size:15px; margin-bottom:12px}
+  input{border:1px solid var(--line); border-radius:10px; padding:11px 13px; font-size:14px; font-family:inherit; outline:none}
+  input:focus{border-color:var(--accent)}
+  button{background:var(--accent); color:#fff; border:none; border-radius:10px; padding:11px 18px; font-size:14px; font-weight:700; cursor:pointer}
+  table{width:100%; border-collapse:collapse; font-size:13px}
+  th{text-align:left; color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.5px; padding:8px 10px; border-bottom:1px solid var(--line)}
+  td{padding:9px 10px; border-bottom:1px solid #f1f5f9}
+  .tag{font-size:10.5px; font-weight:800; padding:3px 8px; border-radius:99px}
+  .ok{background:#ecfdf5; color:#047857} .off{background:#f1f5f9; color:#64748b} .warn{background:#fffbeb; color:#b45309}
+  .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+  .stat{display:inline-block; background:#fff7ed; color:#c2410c; border:1px solid #fed7aa; border-radius:99px; padding:6px 14px; font-size:12.5px; font-weight:800; margin:0 6px 8px 0}
+  .msg{color:var(--muted); font-size:12.5px; margin-top:10px}
+  .err{color:var(--bad); font-size:13px; margin-top:8px}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+  <h1>⚙️ Visual Arc — Admin</h1>
+  <div class="sub">Business control room · numbers, customers, credits</div>
+
+  <div class="card hidden" id="login-card">
+    <h2>Admin key</h2>
+    <div class="row">
+      <input id="admin-key" type="password" placeholder="Enter ADMIN_KEY" style="flex:1; min-width:220px">
+      <button onclick="adminLogin()">Enter</button>
+    </div>
+    <div class="err" id="login-err"></div>
+  </div>
+
+  <div id="panel" class="hidden">
+    <div class="card">
+      <div id="stats"></div>
+    </div>
+
+    <div class="card">
+      <h2>💳 Add credits to a customer (after they pay)</h2>
+      <div class="row">
+        <input id="credit-email" type="email" placeholder="customer@gmail.com" style="flex:2; min-width:200px">
+        <input id="credit-amount" type="number" placeholder="Amount (KSh)" style="flex:1; min-width:140px">
+        <button onclick="addCredit()">Add credits</button>
+      </div>
+      <div class="msg" id="credit-msg">Customer pays you (USDT / M-Pesa) → you add the credits here. This is the real-money flow.</div>
+    </div>
+
+    <div class="card">
+      <h2>👥 Customers</h2>
+      <table><thead><tr><th>Email</th><th>Credits (KSh)</th><th>Joined</th></tr></thead><tbody id="users-table"></tbody></table>
+    </div>
+
+    <div class="card">
+      <h2>📱 Rentals</h2>
+      <table><thead><tr><th>Service</th><th>Number</th><th>Customer</th><th>Price</th><th>Messages</th><th>Status</th></tr></thead><tbody id="rentals-table"></tbody></table>
+    </div>
+
+    <button style="background:#20242e" onclick="loadAll()">↻ Refresh</button>
+    <button style="background:#64748b" onclick="localStorage.removeItem('va_admin');location.reload()">Lock</button>
+  </div>
+
+<script>
+  const $ = s => document.querySelector(s);
+  function key(){ return localStorage.getItem('va_admin') || ''; }
+
+  async function adminLogin(){
+    const k = $('#admin-key').value.trim();
+    localStorage.setItem('va_admin', k);
+    const ok = await loadAll();
+    if(!ok){ $('#login-err').textContent = 'Wrong admin key'; localStorage.removeItem('va_admin'); return; }
+    $('#login-err').textContent = '';
+    $('#login-card').classList.add('hidden');
+    $('#panel').classList.remove('hidden');
+  }
+
+  async function loadAll(){
+    try{
+      const d = await fetch('/api/admin/overview', {headers:{Authorization:'Bearer '+key()}}).then(r=>r.json());
+      if(!d.ok) return false;
+      const totalCredits = d.users.reduce((s,u)=>s+u.credits,0);
+      const active = d.rentals.filter(r=>r.status==='active').length;
+      $('#stats').innerHTML =
+        '<span class="stat">Customers: ' + d.users.length + '</span>' +
+        '<span class="stat">Total credits issued: KSh ' + totalCredits.toLocaleString() + '</span>' +
+        '<span class="stat">Rentals: ' + d.rentals.length + '</span>' +
+        '<span class="stat">Active now: ' + active + '</span>' +
+        '<span class="stat">Provider: ' + (d.provider||'none') + '</span>';
+      $('#users-table').innerHTML = d.users.map(u =>
+        '<tr><td>'+u.email+'</td><td>KSh '+u.credits.toLocaleString()+'</td><td>'+new Date(u.createdAt).toLocaleDateString()+'</td></tr>').join('') || '<tr><td colspan="3" class="msg">No customers yet</td></tr>';
+      $('#rentals-table').innerHTML = d.rentals.map(r => {
+        const st = r.status==='active' ? '<span class="tag ok">active</span>' : (r.refunded ? '<span class="tag warn">refunded</span>' : '<span class="tag off">released</span>');
+        return '<tr><td>'+r.service+'</td><td>'+r.number+'</td><td>'+(r.email||'')+'</td><td>KSh '+r.price+'</td><td>'+r.msgs+'</td><td>'+st+'</td></tr>';
+      }).join('') || '<tr><td colspan="6" class="msg">No rentals yet</td></tr>';
+      return true;
+    }catch(e){ return false; }
+  }
+
+  async function addCredit(){
+    const email = $('#credit-email').value.trim();
+    const amount = Number($('#credit-amount').value);
+    const r = await fetch('/api/admin/credit', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+key()},
+      body: JSON.stringify({email, amount})
+    }).then(x=>x.json());
+    $('#credit-msg').textContent = r.ok ? ('✓ Added KSh '+amount+' → '+email+' (new balance: KSh '+r.credits+')') : ('✗ '+r.error);
+    if(r.ok){ $('#credit-email').value=''; $('#credit-amount').value=''; }
+    loadAll();
+  }
+
+  if(key()) adminLogin(); else $('#login-card').classList.remove('hidden');
+</script>
+</body>
+</html>
